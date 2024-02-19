@@ -20,10 +20,10 @@ class _HomePageState extends State<HomePage> {
     // Transaction(
     //     amount: 33.45, date: DateTime.now(), id: 't3', title: 'Internet')
   ];
-  void _addNewTransaction(String title, double amount) {
+  void _addNewTransaction(String title, double amount, DateTime pickedDate) {
     Transaction newTx = Transaction(
         amount: amount,
-        date: DateTime.now(),
+        date: pickedDate,
         id: 't${_dummyData.length + 1}',
         title: title);
     setState(() {
@@ -37,6 +37,12 @@ class _HomePageState extends State<HomePage> {
         builder: (_) {
           return NewTransaction(addNewTransaction: _addNewTransaction);
         });
+  }
+
+  void _deleteTransaction(String id) {
+    setState(() {
+      _dummyData.removeWhere((element) => id == element.id);
+    });
   }
 
   List<Transaction> get _recentTransactions {
@@ -60,7 +66,10 @@ class _HomePageState extends State<HomePage> {
         child:
             Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           Chart(recentTransactions: _recentTransactions),
-          ListOfTx(transactions: _dummyData)
+          ListOfTx(
+            transactions: _dummyData,
+            deleteTransaction: _deleteTransaction,
+          )
         ]),
       ),
       floatingActionButton: FloatingActionButton(

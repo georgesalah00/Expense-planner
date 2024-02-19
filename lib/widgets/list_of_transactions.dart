@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:styling_and_arch/models/transaction.dart';
 
+// ignore: must_be_immutable
 class ListOfTx extends StatelessWidget {
   final List<Transaction> transactions;
-  const ListOfTx({super.key, required this.transactions});
+  Function deleteTransaction;
+  ListOfTx(
+      {super.key, required this.transactions, required this.deleteTransaction});
 
   @override
   Widget build(BuildContext context) {
@@ -31,43 +34,31 @@ class ListOfTx extends StatelessWidget {
           : ListView.builder(
               itemBuilder: (context, index) {
                 return Card(
-                  elevation: 5,
-                  child: Row(
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                            border: Border.all(
-                                color: Theme.of(context).primaryColor,
-                                width: 2)),
-                        padding: const EdgeInsets.all(5),
-                        margin: const EdgeInsets.symmetric(
-                            vertical: 10, horizontal: 15),
-                        child: Text(
-                          '\$${transactions[index].amount.toStringAsFixed(2)}',
-                          style: TextStyle(
-                              fontSize: 20,
-                              color: Theme.of(context).primaryColor,
-                              fontWeight: FontWeight.bold),
+                    elevation: 5,
+                    margin: const EdgeInsets.all(10),
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: Theme.of(context).primaryColor,
+                        child: Padding(
+                          padding: const EdgeInsets.all(10),
+                          child: FittedBox(
+                            child: Text(
+                              transactions[index].amount.toString(),
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          ),
                         ),
                       ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            transactions[index].title,
-                            style: const TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold),
-                          ),
-                          Text(
-                            DateFormat.yMMMd().format(transactions[index].date),
-                            style: const TextStyle(
-                                fontSize: 12, color: Colors.grey),
-                          )
-                        ],
-                      )
-                    ],
-                  ),
-                );
+                      title: Text(transactions[index].title),
+                      subtitle: Text(
+                          DateFormat.yMMMd().format(transactions[index].date)),
+                      trailing: IconButton(
+                        onPressed: () =>
+                            deleteTransaction(transactions[index].id),
+                        icon: const Icon(Icons.delete),
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ));
               },
               itemCount: transactions.length,
             ),
