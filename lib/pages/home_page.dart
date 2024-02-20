@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:styling_and_arch/models/transaction.dart';
 import 'package:styling_and_arch/widgets/chart.dart';
@@ -12,6 +15,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  bool _showChart = false;
   final List<Transaction> _dummyData = [
     // Transaction(
     //     amount: 69.99, date: DateTime.now(), id: 't1', title: 'New Shoes'),
@@ -53,28 +57,83 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        actions: [
-          IconButton(
-              onPressed: () => _addNewTransactionScreen(context),
-              icon: const Icon(Icons.add))
-        ],
-        title: const Text('Expense Planner'),
-      ),
-      body: SingleChildScrollView(
-        child:
-            Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Chart(recentTransactions: _recentTransactions),
-          ListOfTx(
-            transactions: _dummyData,
-            deleteTransaction: _deleteTransaction,
+    final PreferredSizeWidget appBar = Platform.isIOS
+        ? CupertinoNavigationBar(
+            middle: const Text('Expense Planner'),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                GestureDetector(
+                  onTap: () => _addNewTransactionScreen(context),
+                  child: const Icon(CupertinoIcons.add),
+                )
+              ],
+            ),
           )
-        ]),
+        : AppBar(
+            title: const Text(
+              'Expense Planner',
+              style: TextStyle(color: Colors.black),
+            ),
+            actions: [
+              IconButton(
+                  onPressed: () => _addNewTransactionScreen(context),
+                  icon: const Icon(Icons.add))
+            ],
+          ) as PreferredSizeWidget;
+    final mediaQuery = MediaQuery.of(context);
+    final deviceHeight = mediaQuery.size.height -
+        appBar.preferredSize.height -
+        mediaQuery.padding.top;
+    final isLandScape = mediaQuery.orientation == Orientation.landscape;
+    final listOfTxWidget = SizedBox(
+      height: deviceHeight * 0.7,
+      child: ListOfTx(
+        transactions: _dummyData,
+        deleteTransaction: _deleteTransaction,
       ),
-      floatingActionButton: FloatingActionButton(
-          onPressed: () => _addNewTransactionScreen(context),
-          child: const Icon(Icons.add)),
     );
+    final pageBody = SingleChildScrollView(
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        if (isLandScape)
+          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            const Text('Show Chart'),
+            Switch(
+              value: _showChart,
+              onChanged: (bool value) {
+                setState(() {
+                  _showChart = value;
+                });
+              },
+            )
+          ]),
+        if (!isLandScape)
+          SizedBox(
+              height: deviceHeight * 0.3,
+              child: Chart(recentTransactions: _recentTransactions)),
+        if (!isLandScape) listOfTxWidget,
+        if (isLandScape)
+          _showChart
+              ? SizedBox(
+                  height: deviceHeight * 0.8,
+                  child: Chart(recentTransactions: _recentTransactions))
+              : listOfTxWidget
+      ]),
+    );
+
+    return Platform.isIOS
+        ? CupertinoPageScaffold(
+            navigationBar: appBar as ObstructingPreferredSizeWidget,
+            child: pageBody,
+          )
+        : Scaffold(
+            appBar: appBar,
+            body: pageBody,
+            floatingActionButton: Platform.isIOS
+                ? Container()
+                : FloatingActionButton(
+                    onPressed: () => _addNewTransactionScreen(context),
+                    child: const Icon(Icons.add)),
+          );
   }
 }
