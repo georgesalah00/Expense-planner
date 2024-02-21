@@ -55,32 +55,72 @@ class _HomePageState extends State<HomePage> {
     }).toList();
   }
 
+  List<Widget> _buildLandscapeContent(
+      double deviceHeight, Widget listOfTxWidget) {
+    return [
+      Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+        const Text('Show Chart'),
+        Switch(
+          value: _showChart,
+          onChanged: (bool value) {
+            setState(() {
+              _showChart = value;
+            });
+          },
+        )
+      ]),
+      _showChart
+          ? SizedBox(
+              height: deviceHeight * 0.8,
+              child: Chart(recentTransactions: _recentTransactions))
+          : listOfTxWidget,
+    ];
+  }
+
+  List<Widget> _buildPortraitContent(
+      double deviceHeight, Widget listOfTxWidget) {
+    return [
+      SizedBox(
+          height: deviceHeight * 0.3,
+          child: Chart(recentTransactions: _recentTransactions)),
+      listOfTxWidget
+    ];
+  }
+
+  PreferredSizeWidget _buildAndroidAppBar() {
+    return AppBar(
+      title: const Text(
+        'Expense Planner',
+        style: TextStyle(color: Colors.black),
+      ),
+      actions: [
+        IconButton(
+            onPressed: () => _addNewTransactionScreen(context),
+            icon: const Icon(Icons.add))
+      ],
+    );
+  }
+
+  PreferredSizeWidget _buildIOSAppBar() {
+    return CupertinoNavigationBar(
+      middle: const Text('Expense Planner'),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          GestureDetector(
+            onTap: () => _addNewTransactionScreen(context),
+            child: const Icon(CupertinoIcons.add),
+          )
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final PreferredSizeWidget appBar = Platform.isIOS
-        ? CupertinoNavigationBar(
-            middle: const Text('Expense Planner'),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                GestureDetector(
-                  onTap: () => _addNewTransactionScreen(context),
-                  child: const Icon(CupertinoIcons.add),
-                )
-              ],
-            ),
-          )
-        : AppBar(
-            title: const Text(
-              'Expense Planner',
-              style: TextStyle(color: Colors.black),
-            ),
-            actions: [
-              IconButton(
-                  onPressed: () => _addNewTransactionScreen(context),
-                  icon: const Icon(Icons.add))
-            ],
-          ) as PreferredSizeWidget;
+    final PreferredSizeWidget appBar =
+        Platform.isIOS ? _buildIOSAppBar() : _buildAndroidAppBar();
+
     final mediaQuery = MediaQuery.of(context);
     final deviceHeight = mediaQuery.size.height -
         appBar.preferredSize.height -
@@ -93,32 +133,16 @@ class _HomePageState extends State<HomePage> {
         deleteTransaction: _deleteTransaction,
       ),
     );
-    final pageBody = SingleChildScrollView(
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        if (isLandScape)
-          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            const Text('Show Chart'),
-            Switch(
-              value: _showChart,
-              onChanged: (bool value) {
-                setState(() {
-                  _showChart = value;
-                });
-              },
-            )
-          ]),
-        if (!isLandScape)
-          SizedBox(
-              height: deviceHeight * 0.3,
-              child: Chart(recentTransactions: _recentTransactions)),
-        if (!isLandScape) listOfTxWidget,
-        if (isLandScape)
-          _showChart
-              ? SizedBox(
-                  height: deviceHeight * 0.8,
-                  child: Chart(recentTransactions: _recentTransactions))
-              : listOfTxWidget
-      ]),
+    final pageBody = SafeArea(
+      child: SingleChildScrollView(
+        child:
+            Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          if (isLandScape)
+            ..._buildLandscapeContent(deviceHeight, listOfTxWidget),
+          if (!isLandScape)
+            ..._buildPortraitContent(deviceHeight, listOfTxWidget)
+        ]),
+      ),
     );
 
     return Platform.isIOS
